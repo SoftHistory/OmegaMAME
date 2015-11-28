@@ -301,6 +301,28 @@ void gameboy_sound_device::device_reset()
 	m_snd_regs[AUD3WD] = 0xdd;
 	m_snd_regs[AUD3WE] = 0xda;
 	m_snd_regs[AUD3WF] = 0x48;
+
+	for(int i = 0;i<0x30;i++)
+	{
+		m_snd_regs_mask[i] = 0xff;
+	}
+
+	m_snd_regs_mask[NR10] = 0x7f;
+	m_snd_regs_mask[NR11] = 0xc0;
+	m_snd_regs_mask[NR13] = 0x00;
+	m_snd_regs_mask[NR14] = 0x40;
+	m_snd_regs_mask[NR21] = 0xc0;
+	m_snd_regs_mask[NR23] = 0x00;
+	m_snd_regs_mask[NR24] = 0x40;
+	m_snd_regs_mask[NR30] = 0xe0;
+	m_snd_regs_mask[NR31] = 0x00;
+	m_snd_regs_mask[NR32] = 0xe0;
+	m_snd_regs_mask[NR33] = 0x00;
+	m_snd_regs_mask[NR34] = 0x40;
+	m_snd_regs_mask[NR41] = 0x00;
+	m_snd_regs_mask[NR44] = 0x40;
+	m_snd_regs_mask[NR50] = 0x77;
+	m_snd_regs_mask[NR52] = 0x8f;
 }
 
 
@@ -322,9 +344,9 @@ READ8_MEMBER( gameboy_sound_device::sound_r )
 		case 0x0f:
 			return 0xff;
 		case NR52:
-			return 0x70 | m_snd_regs[offset];
-		default:
 			return m_snd_regs[offset];
+		default:
+			return m_snd_regs[offset] & m_snd_regs_mask[offset];
 	}
 }
 
@@ -337,6 +359,11 @@ WRITE8_MEMBER( gameboy_sound_device::sound_w )
 {
 	/* change in registers so update first */
 	m_channel->update();
+
+	if(offset == NR52)
+	{
+		data &= 0x80;
+	}
 
 	/* Only register NR52 is accessible if the sound controller is disabled */
 	if (!m_snd_control.on && offset != NR52)

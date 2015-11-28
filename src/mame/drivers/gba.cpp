@@ -749,7 +749,7 @@ READ32_MEMBER(gba_state::gba_io_r)
 			if( (mem_mask) & 0xffff0000 )
 			{
 				verboselog(*this, 2, "GBA IO Register Read: SOUNDCNT_H (%08x) = %04x\n", 0x04000000 + ( offset << 2 ) + 2, m_SOUNDCNT_H );
-				retval |= m_SOUNDCNT_H << 16;
+				retval |= (m_SOUNDCNT_H & 0x770f) << 16;
 			}
 			break;
 		case 0x0084/4:
@@ -795,15 +795,6 @@ READ32_MEMBER(gba_state::gba_io_r)
 		case 0x00d8/4:
 		case 0x00dc/4:
 			{
-				// no idea why here, but it matches VBA better
-				// note: this suspicious piece of code crashes "Buffy The Vampire Slayer" (08008DB4) and "The Ant Bully", so disable it for now
-				#if 0
-				if (((offset-0xb0/4) % 3) == 2)
-				{
-					retval = m_dma_regs[offset-(0xb0/4)] & 0xff000000;
-				}
-				else
-				#endif
 
 				retval = m_dma_regs[offset-(0xb0/4)];
 			}
@@ -1031,12 +1022,12 @@ WRITE32_MEMBER(gba_state::gba_io_w)
 			if( (mem_mask) & 0x0000ffff )
 			{
 				verboselog(*this, 2, "GBA IO Register Write: BG0CNT (%08x) = %04x (%08x)\n", 0x04000000 + ( offset << 2 ), data & 0x0000ffff, ~mem_mask );
-				m_BG0CNT = ( m_BG0CNT & ~mem_mask ) | ( data & mem_mask );
+				m_BG0CNT = ( m_BG0CNT & ~mem_mask ) | ( data & mem_mask & 0xdfff ); //Bit 13 is usable only on BG2CNT and BG3CNT.
 			}
 			if( (mem_mask) & 0xffff0000 )
 			{
 				verboselog(*this, 2, "GBA IO Register Write: BG1CNT (%08x) = %04x (%08x)\n", 0x04000000 + ( offset << 2 ), ( data & 0xffff0000 ) >> 16, ~mem_mask );
-				m_BG1CNT = ( m_BG1CNT & ( ~mem_mask >> 16 ) ) | ( ( data & mem_mask ) >> 16 );
+				m_BG1CNT = ( m_BG1CNT & ( ~mem_mask >> 16 ) ) | ( ( data & mem_mask & 0xdfff0000 ) >> 16 ); //Bit 13 is usable only BG2CNT and BG3CNT.
 			}
 			break;
 		case 0x000c/4:
@@ -1223,12 +1214,12 @@ WRITE32_MEMBER(gba_state::gba_io_w)
 			if( (mem_mask) & 0x0000ffff )
 			{
 				verboselog(*this, 2, "GBA IO Register Write: WININ (%08x) = %04x (%08x)\n", 0x04000000 + ( offset << 2 ), data & 0x0000ffff, ~mem_mask );
-				m_WININ = ( m_WININ & ~mem_mask ) | ( data & mem_mask );
+				m_WININ = ( m_WININ & ~mem_mask ) | ( data & mem_mask & 0x3f3f );
 			}
 			if( (mem_mask) & 0xffff0000 )
 			{
 				verboselog(*this, 2, "GBA IO Register Write: WINOUT (%08x) = %04x (%08x)\n", 0x04000000 + ( offset << 2 ), ( data & 0xffff0000 ) >> 16, ~mem_mask );
-				m_WINOUT = ( m_WINOUT & ( ~mem_mask >> 16 ) ) | ( ( data & mem_mask ) >> 16 );
+				m_WINOUT = ( m_WINOUT & ( ~mem_mask >> 16 ) ) | ( ( data & mem_mask & 0x3f3f0000 ) >> 16 );
 			}
 			break;
 		case 0x004c/4:
@@ -1246,7 +1237,7 @@ WRITE32_MEMBER(gba_state::gba_io_w)
 			if( (mem_mask) & 0x0000ffff )
 			{
 				verboselog(*this, 2, "GBA IO Register Write: BLDCNT (%08x) = %04x (%08x)\n", 0x04000000 + ( offset << 2 ), data & 0x0000ffff, ~mem_mask );
-				m_BLDCNT = ( m_BLDCNT & ~mem_mask ) | ( data & mem_mask );
+				m_BLDCNT = ( m_BLDCNT & ~mem_mask ) | ( data & mem_mask & 0x3fff );
 				if(m_BLDCNT & BLDCNT_SFX)
 				{
 					m_fxOn = 1;
@@ -1259,7 +1250,7 @@ WRITE32_MEMBER(gba_state::gba_io_w)
 			if( (mem_mask) & 0xffff0000 )
 			{
 				verboselog(*this, 2, "GBA IO Register Write: BLDALPHA (%08x) = %04x (%08x)\n", 0x04000000 + ( offset << 2 ), ( data & 0xffff0000 ) >> 16, ~mem_mask );
-				m_BLDALPHA = ( m_BLDALPHA & ( ~mem_mask >> 16 ) ) | ( ( data & mem_mask ) >> 16 );
+				m_BLDALPHA = ( m_BLDALPHA & ( ~mem_mask >> 16 ) ) | ( ( data & mem_mask & 0x1f1f0000 ) >> 16 );
 			}
 			break;
 		case 0x0054/4:
