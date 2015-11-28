@@ -98,6 +98,7 @@ private:
 	struct SOUNDC m_snd_control;
 
 	UINT8 m_snd_regs[0x30];
+	UINT8 m_snd_regs_mask[0x30];
 };
 
 extern const device_type GAMEBOY;
